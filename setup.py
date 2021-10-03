@@ -27,11 +27,16 @@ setuptools.setup(
     install_requires=[
         'flask>=2.0.0',
         'Pillow>=8.2.0',
-        'rembg>=1.0.25'
+        'rembg>=1.0.25',
+        'torch==1.8.2+cpu',
+        'torchvision==0.9.2+cpu'
     ],
     setup_requires=[
         'flake8>=3.9.0',
         'pytest-runner>=5.3.0',
         'setuptools>=44.0.0'
+    ],
+    dependency_links=[
+        'https://download.pytorch.org/whl/lts/1.8/torch_lts.html'
     ]
 )
