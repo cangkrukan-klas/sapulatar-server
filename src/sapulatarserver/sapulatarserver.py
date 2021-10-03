@@ -5,6 +5,7 @@ from flask import (
     Blueprint, g, redirect, jsonify, request, url_for, current_app, send_file
 )
 from werkzeug.utils import secure_filename
+from sapulatarserver.rembg import remove_background
 
 sapulatarserver_bp = Blueprint('sapulatar', __name__, url_prefix='/')
 
@@ -43,6 +44,10 @@ def upload_file():
         # TODO create a new folder for each request with unix time for the name
         filepath = os.path.join(current_app.config['UPLOAD_FOLDER'])
         file.save(filepath + filename)
+
+        # TODO process remove background
+
+        # TODO return the url of result image
         return jsonify({
             'status': 'success',
             'message': 'Image uploaded',
@@ -59,7 +64,8 @@ def upload_file():
 
 @sapulatarserver_bp.route('/result/<image_path>', methods=['GET'])
 def get_image(image_path):
-    """ Serve image from the url
+    """
+    Serve image from the url
     @type image_path: str
     @param image_path: The location of image
     """
