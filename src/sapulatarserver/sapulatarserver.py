@@ -1,11 +1,12 @@
-import functools
 import os.path
+from datetime import datetime
 
 from flask import (
-    Blueprint, g, redirect, jsonify, request, url_for, current_app, send_file
+    Blueprint, jsonify, request, current_app, send_file
 )
 from werkzeug.utils import secure_filename
 from sapulatarserver.rembg import remove_background
+from sapulatarserver.form import SapulatarFrom
 
 sapulatarserver_bp = Blueprint('sapulatar', __name__, url_prefix='/')
 
@@ -23,7 +24,18 @@ def allowed_file(filename):
 @sapulatarserver_bp.route('/upload', methods=['POST'])
 def upload_file():
     if request.method == 'POST':
-        
+        current_time = datetime.now()
+        timestamp = current_time.strftime("%Y%m%d%H%M%S")
+        folder_name = current_time.strftime("%Y%m%d")
+
+        # Get Data
+        form = SapulatarFrom()
+        if not form.validate():
+            return jsonify({
+                'status': 'error',
+                'message': form.errors
+            }), 400
+
         # Check if there is no file uploaded
         if 'file' not in request.files or request.files['file'].filename == '':
             return jsonify({
@@ -41,43 +53,63 @@ def upload_file():
             }), 400
 
         filename = secure_filename(file.filename)
-        # TODO create a new folder for each request with unix time for the name
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'])
-        file.save(filepath + filename)
+        filename = timestamp + "_" + filename
+        # create a new folder for each request with unix time for the name
+        if not os.path.exists(os.path.join(current_app.config['UPLOAD_FOLDER'], folder_name)):
+            os.mkdir(os.path.join(current_app.config['UPLOAD_FOLDER'], folder_name), 666)
+        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], folder_name)
+        file.save(os.path.join(filepath, filename))
 
-        # TODO process remove background
+        # process remove background
+        output_filename = remove_background(filename, filepath)
 
-        # TODO return the url of result image
+        # return the url of result image
         return jsonify({
             'status': 'success',
             'message': 'Image uploaded',
-            'filename': filename,
-            'url': request.base_url + os.path.join(filepath, filename)
+            'filename': output_filename,
+            'url': request.host_url + os.path.join("result", folder_name, output_filename)
         }), 200
-    
-    # if request method not POST
+
+    # if request method is not POST
     return jsonify({
         'status': 'error',
         'message': 'Bad method'
     }), 405
 
 
-@sapulatarserver_bp.route('/result/<image_path>', methods=['GET'])
-def get_image(image_path):
+@sapulatarserver_bp.route('/result/<image_folder>/<image_filename>', methods=['GET'])
+def get_image(image_folder, image_filename):
     """
     Serve image from the url
     @type image_path: str
     @param image_path: The location of image
     """
-    # TODO check if file path exists in uploads directory
-    # TODO check if the file is PNG Image (security purpose)
-    # TODO return the image
-    # return send_file(filename, mimetype='image/png')
-    pass
+    file_fullpath = os.path.join(current_app.config['UPLOAD_FOLDER'], image_folder, image_filename)
+
+    # check if file path exists in uploads directory
+    if not os.path.exists(file_fullpath):
+        return jsonify({
+            'status': 'error',
+            'message': f'File {image_filename}, doesn\'t exists.'
+        }), 404
+
+    # check if the file is PNG Image (security purpose)
+    if not image_filename.endswith(".png"):
+        return jsonify({
+            'status': 'error',
+            'message': f'File {image_filename}, is not PNG file'
+        }), 500
+
+    # return the image
+    return send_file(file_fullpath, mimetype='image/png', as_attachment=True, attachment_filename=image_filename)
 
 
 @sapulatarserver_bp.route('/ping', methods=['GET'])
 def ping():
+    """
+    Healthcheck endpoint
+    """
     return jsonify({
         'status': 'success',
         'message': 'pong'

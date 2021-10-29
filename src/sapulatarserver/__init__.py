@@ -1,15 +1,17 @@
 import os
+import click
 
 from flask import Flask
+from flask.cli import FlaskGroup
 
 
 def create_app(test_config=None):
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(__name__, instance_relative_config=True, static_folder=None)
     app.config.from_mapping(
         # default config
         SECRET_KEY='dev',
         UPLOAD_FOLDER='uploads/',
-        ALLOWED_EXTENSIONS=['jpg', 'jpeg', 'png']
+        ALLOWED_EXTENSIONS=['jpg', 'jpeg', 'png'],
     )
 
     if test_config is None:
@@ -24,9 +26,11 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # TODO load rembg lib
-
     from . import sapulatarserver
     app.register_blueprint(sapulatarserver.sapulatarserver_bp)
 
     return app
+
+@click.group(cls=FlaskGroup, create_app=create_app)
+def cli():
+    """Management script for the Sapulatarserver application."""

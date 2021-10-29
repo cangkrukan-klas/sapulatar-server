@@ -1,14 +1,18 @@
 import numpy as np
 import io
 import os
-from PIL import Image
-from rembg.bg import remove
+from PIL import Image, ImageFile
+from rembg.bg import remove as removebg
 
 
-# TODO prepare rembg interface
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
-def remove_background(filename, filepath):
+def remove_background(filename, filepath, alpha_matting=False,
+                      alpha_matting_foreground_threshold=240,
+                      alpha_matting_background_threshold=10,
+                      alpha_matting_erode_structure_size=10,
+                      alpha_matting_base_size=1000) -> str:
     """
     Remove background from image with rembg
     @type filename: str
@@ -26,7 +30,13 @@ def remove_background(filename, filepath):
     image = np.fromfile(os.path.join(filepath, filename))
 
     # remove the background and save it
-    image_result = remove(image)
+    image_result = removebg(
+        image, alpha_matting=alpha_matting,
+        alpha_matting_foreground_threshold=alpha_matting_foreground_threshold,
+        alpha_matting_background_threshold=alpha_matting_background_threshold,
+        alpha_matting_erode_structure_size=alpha_matting_erode_structure_size,
+        alpha_matting_base_size=alpha_matting_base_size
+    )
     image_result = Image.open(io.BytesIO(image_result)).convert("RGBA")
     image_result.save(os.path.join(filepath, output_filename))
 
