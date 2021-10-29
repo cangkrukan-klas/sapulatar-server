@@ -24,19 +24,23 @@ setuptools.setup(
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.7",
+    entry_points={
+        'console_scripts': [
+            'sapulatarserver=sapulatarserver:cli'
+        ]
+    },
     install_requires=[
-        'flask>=2.0.0',
-        'Pillow>=8.2.0',
-        'rembg>=1.0.25',
-        'torch==1.8.2+cpu',
-        'torchvision==0.9.2+cpu'
+        'flask~=2.0.0',
+        'Flask-WTF~=0.15.1',
+        'numpy==1.20',
+        'Pillow~=8.3.0',
+        'rembg~=1.0.0',
+        'torch~=1.9.0',
+        'torchvision~=0.10.0'
     ],
     setup_requires=[
-        'flake8>=3.9.0',
-        'pytest-runner>=5.3.0',
-        'setuptools>=44.0.0'
-    ],
-    dependency_links=[
-        'https://download.pytorch.org/whl/lts/1.8/torch_lts.html'
+        'flake8~=3.9.0',
+        'pytest-runner~=5.3.0',
+        'setuptools~=58.1.0'
     ]
 )
